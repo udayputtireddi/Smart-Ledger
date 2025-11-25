@@ -1,0 +1,5 @@
+{
+  "name": "Smart Ledger",
+  "description": "A minimalist, AI-powered daily ledger that automatically categorizes your transactions and provides beautiful monthly visual summaries of your income and expenditure.",
+  "requestFramePermissions": []
+}
