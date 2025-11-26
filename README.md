@@ -30,33 +30,6 @@ A modern, AI-powered personal finance tracker that automatically categorizes you
 2.  **Firebase Account**: Create a project at [console.firebase.google.com](https://console.firebase.google.com).
 3.  **Gemini API Key**: Get one at [aistudio.google.com](https://aistudio.google.com).
 
-### Installation
-
-1.  **Clone the repository** (or download files):
-    ```bash
-    git clone <your-repo-url>
-    cd smart-ledger
-    ```
-
-2.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
-
-3.  **Environment Setup**:
-    Create a `.env` file in the root directory:
-    ```env
-    VITE_API_KEY=<Your_Gemini_Key>
-    
-    # You can also add your firebase config here if you prefer, 
-    # but the project is set up to use the 'firebase.ts' hardcoded keys 
-    # or you can update firebase.ts to use env vars:
-    VITE_FIREBASE_API_KEY=...
-    VITE_FIREBASE_AUTH_DOMAIN=...
-    VITE_FIREBASE_PROJECT_ID=...
-    # ...etc
-    ```
-
 4.  **Firebase Setup**:
     - Enable **Authentication** (Email/Password) in Firebase Console.
     - Enable **Firestore Database** (Start in Production mode).
