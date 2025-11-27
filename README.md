@@ -4,15 +4,7 @@ A modern, AI-powered personal finance tracker that automatically categorizes you
 
 ![Smart Ledger Banner](https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000)
 
-## ✨ Features
 
-- **AI Auto-Categorization**: Simply enter "Starbucks" or "Uber", and Gemini AI automatically categorizes it as "Food & Drink" or "Transport".
-- **Cloud Sync (Firebase)**: Your data is stored in Firestore, accessible from any device.
-- **Visual Analytics**: Beautiful monthly summaries, daily trend charts, and spending breakdown pie charts.
-- **PWA Ready**: Installable on iOS and Android as a native-like app.
-- **Secure Authentication**: Email/Password login via Firebase Auth.
-- **Data Backup**: Export your ledger to JSON or restore from backup.
-- **Mobile First Design**: Fully responsive UI tailored for mobile usage.
 
 ## 🛠️ Tech Stack
 
