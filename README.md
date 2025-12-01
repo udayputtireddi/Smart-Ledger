@@ -5,15 +5,6 @@ A modern, AI-powered personal finance tracker that automatically categorizes you
 ![Smart Ledger Banner](https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000)
 
 
-  
-## 🛠️ Tech Stack
-
-- **Frontend**: React 19, TypeScript, Tailwind CSS
-- **Build Tool**: Vite
-- **Backend/DB**: Firebase (Firestore, Authentication, Hosting)
-- **AI**: Google Gemini API (`@google/genai`)
-- **Charts**: Recharts
-
 ## 🚀 Getting Started
 
 ### Prerequisites
