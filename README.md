@@ -51,3 +51,9 @@ A modern, AI-powered personal finance tracker that automatically categorizes you
     npm run build
     firebase deploy
     ```
+
+## 📱 iOS Installation (PWA)
+
+1.  Open the deployed website in **Safari**.
+2.  Tap the **Share** button (Square with arrow up).
+3.  Scroll down and tap **"Add to Home Screen"**.
