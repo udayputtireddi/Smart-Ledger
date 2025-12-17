@@ -1,4 +1,4 @@
-# 
+# Smart Ledger 🤖💰
 
 A modern, AI-powered personal finance tracker that automatically categorizes your transactions using Google Gemini and syncs your data securely to the cloud with Firebase.
 
