@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validTransaction(d) {
+      return d.keys().hasAll(['description', 'amount', 'date', 'type', 'category'])
+        && d.keys().hasOnly([
+          'description', 'amount', 'date', 'type', 'category',
+          'isAutoCategorized', 'createdAt', 'updatedAt'
+        ])
+        && d.description is string && d.description.size() > 0
+        && d.description.size() <= 2000
+        && d.amount is number && d.amount > 0 && d.amount <= 1000000000000
+        && d.date is string
+        && d.date.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && d.type in ['INCOME', 'EXPENSE']
+        && d.category is string && d.category.size() > 0 && d.category.size() <= 100
+        && (!('isAutoCategorized' in d) || d.isAutoCategorized is bool)
+        && (!('createdAt' in d) || (d.createdAt is int && d.createdAt >= 0))
+        && (!('updatedAt' in d) || (d.updatedAt is int && d.updatedAt >= 0));
+    }
+
+    match /users/{uid}/transactions/{transactionId} {
+      allow get, list, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && validTransaction(request.resource.data);
+      allow update: if isOwner(uid)
+        && validTransaction(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'description', 'amount', 'date', 'type', 'category',
+          'isAutoCategorized', 'updatedAt'
+        ]);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

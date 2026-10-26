@@ -1,0 +1,32 @@
+name: Firestore security validation
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Install isolated security test tools
+        run: npm ci --prefix tests --ignore-scripts --no-audit --no-fund
+      - run: npm run test:rules
+        env:
+          CI: 'true'

@@ -20,6 +20,7 @@ import {
 
 // 🔥 FIREBASE IMPORTS
 import { auth, db } from './firebase';
+import { transactionFromDocument } from './services/transactionValidation';
 import {
   onAuthStateChanged,
   signOut
@@ -48,15 +49,22 @@ const App: React.FC = () => {
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // 🔥 NEW: Firebase Auth Session Listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      setTransactions([]);
+      setEditingTransaction(null);
+      setIsAddModalOpen(false);
+      setIsDataModalOpen(false);
+      setNotification(null);
+      setSyncError(null);
       if (firebaseUser) {
         setUser({
           id: firebaseUser.uid,
-          email: firebaseUser.email!,
-          name: firebaseUser.email!.split("@")[0],
+          email: (firebaseUser.email ?? ""),
+          name: (firebaseUser.email ?? "").split("@")[0],
         });
       } else {
         setUser(null);
@@ -74,18 +82,26 @@ const App: React.FC = () => {
     const txRef = collection(db, "users", user.id, "transactions");
     const qTx = query(txRef, orderBy("date", "desc"));
 
+    let active = true;
     const unsub = onSnapshot(qTx, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Transaction[];
-
-      setTransactions(list);
+      if (!active || auth.currentUser?.uid !== user.id) return;
+      setTransactions(snapshot.docs.map(transactionFromDocument) as Transaction[]);
+      setSyncError(null);
+    }, () => {
+      if (!active || auth.currentUser?.uid !== user.id) return;
+      setTransactions([]);
+      setSyncError("Unable to load transactions. Check your connection and account access, then sign in again.");
     });
 
-    return () => unsub();
+    return () => { active = false; unsub(); };
+  }, [user?.id]);
 
-  }, [user]);
+  const requireCurrentUser = () => {
+    if (!user || auth.currentUser?.uid !== user.id) {
+      throw new Error("Your session changed. Sign in again before saving.");
+    }
+    return user.id;
+  };
 
   // 🔥 NEW: ADD Transaction (Firestore)
   const handleAddTransaction = async (
@@ -95,9 +111,9 @@ const App: React.FC = () => {
     type: TransactionType,
     category: string
   ) => {
-    if (!user) return;
+    const uid = requireCurrentUser();
 
-    await addDoc(collection(db, "users", user.id, "transactions"), {
+    await addDoc(collection(db, "users", uid, "transactions"), {
       description,
       amount,
       date,
@@ -107,15 +123,16 @@ const App: React.FC = () => {
       createdAt: Date.now()
     });
 
+    if (auth.currentUser?.uid !== uid) return;
     setIsAddModalOpen(false);
     showNotification("Transaction added successfully");
   };
 
   // 🔥 NEW: UPDATE Transaction
   const handleUpdateTransaction = async (updatedTx: Transaction) => {
-    if (!user) return;
+    const uid = requireCurrentUser();
 
-    const ref = doc(db, "users", user.id, "transactions", updatedTx.id);
+    const ref = doc(db, "users", uid, "transactions", updatedTx.id);
     await updateDoc(ref, {
       description: updatedTx.description,
       amount: updatedTx.amount,
@@ -126,6 +143,7 @@ const App: React.FC = () => {
       updatedAt: Date.now(),
     });
 
+    if (auth.currentUser?.uid !== uid) return;
     setIsAddModalOpen(false);
     setEditingTransaction(null);
     showNotification("Transaction updated");
@@ -133,17 +151,17 @@ const App: React.FC = () => {
 
   // 🔥 NEW: DELETE Transaction
   const handleDeleteTransaction = async (id: string) => {
-    if (!user) return;
-
-    if (window.confirm("Are you sure you want to delete this transaction?")) {
-      await deleteDoc(doc(db, "users", user.id, "transactions", id));
-      showNotification("Transaction deleted");
+    const expectedUid = user?.id;
+    try {
+      const uid = requireCurrentUser();
+      if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+      await deleteDoc(doc(db, "users", uid, "transactions", id));
+      if (auth.currentUser?.uid === uid) showNotification("Transaction deleted");
+    } catch {
+      if (auth.currentUser?.uid === expectedUid) {
+        showNotification("Unable to delete. Check your connection and account access, then try again.");
+      }
     }
-  };
-
-  // 🔥 Firebase LoginPage returns user data
-  const handleLogin = (loggedIn: User) => {
-    setUser(loggedIn);
   };
 
   // 🔥 NEW: Firebase Logout
@@ -163,7 +181,7 @@ const App: React.FC = () => {
   const showNotification = (txt: string) => setNotification(txt);
 
   // When no user is logged in, show login page
-  if (!user) return <LoginPage onLogin={handleLogin} />;
+  if (!user) return <LoginPage />;
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -276,6 +294,7 @@ const App: React.FC = () => {
         )}
 
         <div className="flex-1 p-4 sm:p-8 max-w-6xl mx-auto w-full">
+          {syncError && <p role="alert" className="mb-4 text-rose-600">{syncError}</p>}
           {currentView === 'dashboard' && (
             <div className="animate-in fade-in duration-500">
                <div className="mb-6">
@@ -369,7 +388,8 @@ const App: React.FC = () => {
       </nav>
 
       {/* Transaction Modal */}
-      <TransactionForm 
+      <TransactionForm
+        key={user.id}
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onAddTransaction={handleAddTransaction}
@@ -382,10 +402,6 @@ const App: React.FC = () => {
         isOpen={isDataModalOpen}
         onClose={() => setIsDataModalOpen(false)}
         transactions={transactions}
-        onImport={(data) => {
-          console.log("Import disabled in Firestore mode");
-          alert("Import is not available in cloud mode yet!");
-        }}
       />
 
     </div>
@@ -393,3 +409,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
