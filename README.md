@@ -73,15 +73,15 @@ npm ci
 npm run test:unit
 npm run typecheck
 npm run build
-npm install --prefix tests --ignore-scripts --no-audit --no-fund
+npm ci --prefix tests --ignore-scripts --no-audit --no-fund
 npm run test:rules
 ```
 
 The rules suite requires `127.0.0.1:8080` and uses only `demo-smart-ledger`.
 Do not change the test project to the live `.firebaserc` project. Test tooling is
-isolated in `tests/package.json`; direct versions are pinned. A test-tool lockfile
-must be generated and reviewed in an environment with npm access before relying
-on fully reproducible transitive dependencies. The application lockfile is unchanged.
+isolated in `tests/package.json`; direct versions are pinned and transitive versions
+are recorded in `tests/package-lock.json`, resolved by GitHub Actions. The application
+lockfile is unchanged.
 
 [CI](.github/workflows/security.yml) runs checks only; it has no deployment step
 or Firebase credentials. No production rules have been inspected or deployed by
@@ -89,7 +89,8 @@ this change. Do not run bare `firebase deploy`: it now includes Firestore rules.
 Rules deployment requires separate explicit approval after comparing the deployed
 rules, confirming the project/database and reviewing any legacy schema conflicts.
 
-Status: proposed security hardening; runtime validation pending CI. Restore is
+Status: proposed security hardening; 47 emulator tests, 15 client tests, typecheck
+and build passed in CI. See the report for evidence and remaining release gates. Restore is
 explicitly disabled to prevent delete-before-import data loss; export remains
 available. Next security priority: move Gemini credentials and requests behind an
 authenticated, rate-limited backend. See the report for follow-up details.
