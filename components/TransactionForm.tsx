@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Loader2, X, Calendar, DollarSign, AlignLeft, Save } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
 import { categorizeTransaction } from '../services/geminiService';
+import { validateTransactionInput } from '../services/transactionValidation';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -12,8 +13,8 @@ interface TransactionFormProps {
     date: string,
     type: TransactionType,
     category: string
-  ) => void;
-  onUpdateTransaction: (transaction: Transaction) => void;
+  ) => Promise<void>;
+  onUpdateTransaction: (transaction: Transaction) => Promise<void>;
   initialData?: Transaction | null;
 }
 
@@ -37,8 +38,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const [date, setDate] = useState(getLocalDateString());
   const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
+    setSaveError(null);
     if (initialData) {
       setDescription(initialData.description);
       setAmount(initialData.amount.toString());
@@ -56,15 +59,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description || !amount) return;
+    if (isSubmitting) return;
+    setSaveError(null);
 
     setIsSubmitting(true);
 
     try {
-      const parsedAmount = parseFloat(amount);
+      const parsedAmount = Number(amount);
+      validateTransactionInput(description, parsedAmount, date, type);
 
       if (initialData) {
-        onUpdateTransaction({
+        await onUpdateTransaction({
           ...initialData,
           description,
           amount: parsedAmount,
@@ -79,12 +84,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         });
       } else {
         const category = await categorizeTransaction(description, parsedAmount, type);
-        onAddTransaction(description, parsedAmount, date, type, category);
+        await onAddTransaction(description, parsedAmount, date, type, category);
       }
 
-      onClose();
+      // Parent closes only after the write succeeds for the current account.
     } catch (err) {
-      console.error("Transaction save error", err);
+      setSaveError(err instanceof Error && !('code' in err)
+        ? err.message : 'Unable to save. Check your connection and account access, then try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,6 +118,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {saveError && <p role="alert" className="text-sm text-rose-600">{saveError}</p>}
           {/* Toggle Income/Expense */}
           <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl">
             <button
@@ -151,6 +158,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 step="0.01"
+                min="0.01"
+                max="1000000000000"
                 className="w-full pl-9 pr-4 py-3 border rounded-xl text-lg font-mono"
               />
             </div>
@@ -165,6 +174,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
               <AlignLeft className="absolute left-3 top-3 text-slate-400" size={18} />
               <input
                 type="text"
+                maxLength={2000}
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -219,3 +229,4 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     </div>
   );
 };
+

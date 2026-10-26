@@ -1,0 +1,14 @@
+{
+  "name": "smart-ledger-security-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:rules": "firebase emulators:exec --config ../firebase.json --only firestore --project demo-smart-ledger \"node --test firestore.rules.test.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.0",
+    "firebase": "12.6.0",
+    "firebase-tools": "15.34.1"
+  },
+  "engines": { "node": ">=22" }
+}

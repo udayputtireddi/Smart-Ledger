@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { User } from '../types';
 import { Wallet, ArrowRight, Lock, Mail, User as UserIcon, Loader2, Check } from 'lucide-react';
 
 // ⬇️ NEW: Firebase imports
@@ -9,11 +8,7 @@ import {
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 
-interface LoginPageProps {
-  onLogin: (user: User, rememberMe: boolean) => void;
-}
-
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+export const LoginPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,15 +39,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         firebaseUser = userCred.user;
       }
 
-      // Pass user info to App
-      onLogin(
-        {
-          id: firebaseUser.uid,
-          email: firebaseUser.email!,
-          name: name || firebaseUser.email!.split('@')[0],
-        },
-        rememberMe
-      );
+      // App observes Firebase Auth directly; UI props never establish a session.
 
     } catch (err: any) {
       console.error(err);
@@ -237,3 +224,4 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     </div>
   );
 };
+
