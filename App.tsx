@@ -402,7 +402,6 @@ const App: React.FC = () => {
         isOpen={isDataModalOpen}
         onClose={() => setIsDataModalOpen(false)}
         transactions={transactions}
-
       />
 
     </div>

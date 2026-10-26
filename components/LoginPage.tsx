@@ -26,17 +26,13 @@ export const LoginPage: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      let firebaseUser;
-
       if (isLogin) {
         // 🔐 Firebase LOGIN
-        const userCred = await signInWithEmailAndPassword(auth, email, password);
-        firebaseUser = userCred.user;
+        await signInWithEmailAndPassword(auth, email, password);
 
       } else {
         // 🆕 Firebase SIGNUP
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        firebaseUser = userCred.user;
+        await createUserWithEmailAndPassword(auth, email, password);
       }
 
       // App observes Firebase Auth directly; UI props never establish a session.

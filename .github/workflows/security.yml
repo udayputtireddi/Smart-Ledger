@@ -2,7 +2,7 @@ name: Firestore security validation
 on:
   pull_request:
   push:
-    branches: [main, fix/firestore-security]
+    branches: [main]
 permissions:
   contents: read
 jobs:
@@ -27,6 +27,12 @@ jobs:
       - run: npm run build
       - name: Install isolated security test tools
         run: npm install --prefix tests --ignore-scripts --no-audit --no-fund
+      - name: Preserve resolved test dependency lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-lockfile
+          path: tests/package-lock.json
+          retention-days: 3
       - run: npm run test:rules
         env:
           CI: 'true'
