@@ -83,3 +83,24 @@ for (const cost of [0,-1,NaN,Infinity,101,1.5]) test('invalid cost '+cost,async(
 
 for(const amount of [0,-1,Infinity,NaN,1e13]) test('reject invalid amount '+amount,()=>assert.throws(()=>validate({...valid,input:{...valid.input,amount}})));
 test('reject oversized description',()=>assert.throws(()=>validate({...valid,input:{...valid.input,description:'x'.repeat(501)}})));
+
+
+test('browser source cannot import Gemini or legacy secret variables', async () => {
+  const { readdir, readFile } = await import('node:fs/promises');
+  const { fileURLToPath } = await import('node:url');
+  const path = await import('node:path');
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  async function walk(dir) {
+    for(const entry of await readdir(dir,{withFileTypes:true})) {
+      if(['functions','server','tests','scripts','node_modules','dist','.git','.firebase'].includes(entry.name)) continue;
+      const full=path.join(dir,entry.name);
+      if(entry.isDirectory()) await walk(full);
+      else if(/\.(?:tsx?|html)$/.test(entry.name) && entry.name!=='server.ts') {
+        const content=await readFile(full,'utf8');
+        assert.doesNotMatch(content,/@google\/genai|VITE_GEMINI_API_KEY|VITE_API_KEY|process\.env\.(?:GEMINI_API_KEY|API_KEY)/,full);
+        assert.doesNotMatch(content,/=\s*import\.meta\.env\s*;/, 'Do not expose the entire Vite environment');
+      }
+    }
+  }
+  await walk(root);
+});
