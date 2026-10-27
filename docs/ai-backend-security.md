@@ -77,8 +77,14 @@ a separate production blocker; this PR secures AI endpoints only.
 
 ## Validation and next steps
 
-Dependency-free tests run locally. Clean dependency installation, frontend typecheck,
+Dependency-free tests run locally. Gateway identity and quota-store integration are also tested with Firebase Auth/Firestore emulators in CI. Clean dependency installation, frontend typecheck,
 server compilation, frontend build and bundle checks run in [AI security CI](../.github/workflows/ai-security.yml).
 No live AI calls or production data were used. Review the PR's current CI result.
 Next: approve staged rollout, verify deployed access and quota rules, rotate exposed
 keys, and address the remaining repository-specific audit findings.
+
+The pinned Firebase CLI does not load multi-database rules in the emulator. The
+integration suite uses `firebase.ai-emulators.json` to test the exact deny-all quota
+policy against the default emulator database, and separately tests atomic Admin SDK
+transactions in the named emulator database. Verify that the deny-all policy is
+bound to the production `ai-security` database before rollout; CI cannot prove that.

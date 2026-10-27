@@ -43,9 +43,11 @@ test('disabled and anonymous accounts cannot use AI',async()=>{
   assert.equal((await call(user.idToken)).status,401);
   assert.equal((await call((await signup(true)).idToken)).status,401);
 });
-test('named quota database denies signed-in client reads and writes',async()=>{
+// The pinned CLI cannot load rules for multiple databases. Test the exact quota
+// policy in the default emulator DB; named production rule binding is a release gate.
+test('quota rules deny signed-in client reads and writes',async()=>{
   const user=await signup();
-  const url=`http://${process.env.FIRESTORE_EMULATOR_HOST}/v1/projects/demo-smart-ledger/databases/ai-security/documents/aiUsage/test`;
+  const url=`http://${process.env.FIRESTORE_EMULATOR_HOST}/v1/projects/demo-smart-ledger/databases/(default)/documents/aiUsage/test`;
   const headers={Authorization:`Bearer ${user.idToken}`,'Content-Type':'application/json'};
   assert.equal((await fetch(url,{headers})).status,403);
   assert.equal((await fetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:{used:{integerValue:'0'}}})})).status,403);
