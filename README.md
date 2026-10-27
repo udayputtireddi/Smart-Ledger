@@ -94,3 +94,11 @@ and build passed in CI. See the report for evidence and remaining release gates.
 explicitly disabled to prevent delete-before-import data loss; export remains
 available. Next security priority: move Gemini credentials and requests behind an
 authenticated, rate-limited backend. See the report for follow-up details.
+
+
+## AI backend security
+
+AI now uses an authenticated server endpoint; never put Gemini credentials in Vite
+environment variables. Backend deployment and secret rotation remain pending.
+See [setup, limits, compatibility and validation](docs/ai-backend-security.md).
+Next steps: review CI, configure the backend and approve a staged rollout.
